@@ -17,7 +17,7 @@ import logging
 import argparse
 from time import sleep
 import atexit
-from signal import signal, SIGTERM, SIGINT
+from signal import signal, SIGTERM, SIGINT, SIGUSR1
 
 ec_sysfs_file = "/sys/kernel/debug/ec/ec0/io"
 
@@ -97,8 +97,8 @@ sensors = {
 fan_speed_levels = [
                     0,      # level 0 (0xFF) fan is off
                     59,     # level 1 (0xC4)
-                    86,     # level 2 (0xA9)
-                    115,    # level 3 (0x8C)
+                    97,     # level 2 (0xA9) BIOS 158 (0x9E)
+                    119,    # level 3 (0x8C) BIOS 136 (0x88)
                     129,    # level 4 (0x7E)
                     255     # level 5 (0x00) fan runs at full speed
                     ]
@@ -161,6 +161,14 @@ def ec_write(offset, byte):
 def invert(byte):
     return 255 - byte
 
+def toggle_debug_logging(signum, stackframe):
+    logger = logging.getLogger()
+    loglevel = logger.getEffectiveLevel()
+    if loglevel != logging.DEBUG:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.WARNING)
+    
 def signal_handler(signum, stackframe):
     '''Just make sure we exit gracefully'''
     raise SystemExit
@@ -169,6 +177,9 @@ def install_exit_handler(exit_func):
     for signum in (SIGTERM, SIGINT):
         signal(signum, signal_handler)
     atexit.register(exit_func)
+    
+def install_toggle_debug_handler():
+    signal(SIGUSR1, toggle_debug_logging)
 
 def cleanup():
     logging.debug("Cleaning up")
@@ -201,6 +212,9 @@ loggging_format = '%(levelname)-8s %(message)s'
 logging.basicConfig(format=loggging_format, level=loglevel)
 
 logging.debug("Debug messages enabled")
+
+install_toggle_debug_handler()
+
 
 # Check root
 
