@@ -146,10 +146,10 @@ def ec_read(offset = None):
                 fh.seek(offset)
                 fh.read(1)
     except FileNotFoundError:
-        logging.error("you have to load the ec_sys kernel module")
+        logging.error('Kernel module "ec_sys" is not loaded')
         quit()
     except Exception as e:
-        logging.error("Failed writing to EC")
+        logging.error("Failed reading from EC")
         logging.error(e)
         quit()
     return ec_data
