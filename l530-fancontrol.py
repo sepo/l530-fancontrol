@@ -13,6 +13,7 @@ http://download.lenovo.com/ibmdl/pub/pc/pccbbs/mobiles/g3uj14us.txt
 
 import binascii
 import re
+import subprocess
 import logging
 import argparse
 from time import sleep
@@ -123,6 +124,19 @@ def int_to_byte_r(integer):
     i = 255 - integer
     return bytes([i])
 
+def load_ec_module():
+    with open('/proc/modules', 'r') as fh:
+        for line in fh:
+            if re.search('^ec_sys ', line) is not None:
+                logging.debug('Kernel module "ec_sys" already loaded')
+                return
+    
+    logging.debug('Loading kernel module "ec_sys" with write support enabled')
+    result = subprocess.run(['modprobe', '-v', 'ec_sys', 'write_support=1'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if result.returncode != 0:
+        logging.error('Loading kernel module "ec_sys" failed: {}'.format(result.stderr))
+        quit()
+
 def ec_read(offset = None):
     try:
         with open(ec_sysfs_file, 'rb', buffering=0) as fh:
@@ -217,6 +231,8 @@ install_toggle_debug_handler()
 
 
 # Check root
+
+load_ec_module()
 
 ec_data = ec_read()
 

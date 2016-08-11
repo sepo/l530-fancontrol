@@ -3,9 +3,8 @@ Description=L530 fan control script
 After=multi-user.target
 
 [Service]
-ExecStart=/usr/bin/l530-fancontrol.py -d -m
-ExecStartPre=/sbin/modprobe ec_sys
-ExecStopPost=/sbin/rmmod ec_sys
+Type=simple
+ExecStart=/sbin/l530-fancontrol.py -m
 Restart=on-failure
 
 [Install]
